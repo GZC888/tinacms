@@ -1,5 +1,69 @@
 # tina-graphql
 
+## 1.5.5
+
+### Patch Changes
+
+- Updated dependencies [[`31513bb`](https://github.com/tinacms/tinacms/commit/31513bb473cd1d349a3711ef7c5075cf9d03f121)]:
+  - @tinacms/schema-tools@1.6.5
+  - @tinacms/mdx@1.4.5
+
+## 1.5.4
+
+### Patch Changes
+
+- [#4843](https://github.com/tinacms/tinacms/pull/4843) [`4753c9b`](https://github.com/tinacms/tinacms/commit/4753c9b53854d19212229f985bc445b2794fad9a) Thanks [@JackDevAU](https://github.com/JackDevAU)! - ⬆️ Update Minor & Patch Dependencies Versions
+
+- Updated dependencies [[`4753c9b`](https://github.com/tinacms/tinacms/commit/4753c9b53854d19212229f985bc445b2794fad9a)]:
+  - @tinacms/mdx@1.4.4
+  - @tinacms/schema-tools@1.6.4
+
+## 1.5.3
+
+### Patch Changes
+
+- [#4804](https://github.com/tinacms/tinacms/pull/4804) [`d08053e`](https://github.com/tinacms/tinacms/commit/d08053e758b6910afa8ab8952a40984921cccbc4) Thanks [@dependabot](https://github.com/apps/dependabot)! - ⬆️ Updates Typescript to v5.5, @types/node to v22.x, next.js to latest version 14.x, and removes node-fetch
+
+- Updated dependencies [[`6cd3596`](https://github.com/tinacms/tinacms/commit/6cd35967ab0d34851be44199bc9821b128fcfc75), [`d08053e`](https://github.com/tinacms/tinacms/commit/d08053e758b6910afa8ab8952a40984921cccbc4)]:
+  - @tinacms/schema-tools@1.6.3
+  - @tinacms/mdx@1.4.3
+
+## 1.5.2
+
+### Patch Changes
+
+- f088b97: Fix vulnerable packages - Update Nodemon from version `2.0.19` to `3.1.4`
+- Updated dependencies [6ccda6c]
+- Updated dependencies [33eaa81]
+  - @tinacms/schema-tools@1.6.2
+  - @tinacms/mdx@1.4.2
+
+## 1.5.1
+
+### Patch Changes
+
+- Updated dependencies [ae03e8e]
+  - @tinacms/schema-tools@1.6.1
+  - @tinacms/mdx@1.4.1
+
+## 1.5.0
+
+### Minor Changes
+
+- 324950a: Updates Plate Editor to latest version 36.
+
+  - Upgrades all remaining packages `Typescript` to version `^5`
+  - Adds Shadcn/ui styles/colours to our `tinatailwind` config (`packages/@tinacms/cli/src/next/vite/tailwind.ts`)
+  - Replaces some `lodash` deps with either the specific function i.e. `lodash.set` or implements them in a utility file
+  - Updates and removes old version of plate (`plate-headless`) for latest version `^36`
+  - Starts removing and cleaning up some of the old Plate code.
+
+### Patch Changes
+
+- Updated dependencies [324950a]
+  - @tinacms/schema-tools@1.6.0
+  - @tinacms/mdx@1.4.0
+
 ## 1.4.40
 
 ### Patch Changes

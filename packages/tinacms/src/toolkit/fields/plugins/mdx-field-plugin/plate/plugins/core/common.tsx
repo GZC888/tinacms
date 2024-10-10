@@ -1,12 +1,4 @@
 import {
-  someNode,
-  getPluginType,
-  isMarkActive as isMarkActiveBase,
-  insertNodes,
-  setNodes,
-  findNode,
-  PlateEditor,
-  getBlockAbove,
   createParagraphPlugin,
   createHorizontalRulePlugin,
   createNodeIdPlugin,
@@ -18,17 +10,29 @@ import {
   createItalicPlugin,
   createUnderlinePlugin,
   createCodePlugin,
-} from '@udecode/plate-headless'
+  createIndentListPlugin,
+  createTablePlugin,
+} from '@udecode/plate'
 import { ReactEditor } from 'slate-react'
 import {
   createCodeBlockPlugin,
   createHTMLBlockPlugin,
   createHTMLInlinePlugin,
 } from '../create-code-block'
-import { Editor, Node, Transforms } from 'slate'
 import { ELEMENT_IMG } from '../create-img-plugin'
 import { ELEMENT_MDX_BLOCK, ELEMENT_MDX_INLINE } from '../create-mdx-plugins'
 import { HANDLES_MDX } from './formatting'
+import {
+  findNode,
+  getBlockAbove,
+  getPluginType,
+  insertNodes,
+  type PlateEditor,
+  setNodes,
+  someNode,
+} from '@udecode/plate-common'
+import { createSlashPlugin } from '@udecode/plate-slash-command'
+import { Transforms, Editor, Node } from 'slate'
 
 export const plugins = [
   createHeadingPlugin(),
@@ -42,10 +46,26 @@ export const plugins = [
   createUnderlinePlugin(),
   createCodePlugin(),
   createListPlugin(),
+  createIndentListPlugin(),
   createHorizontalRulePlugin(),
   // Allows us to do things like copy/paste, remembering the state of the element (like mdx)
   createNodeIdPlugin(),
+  createSlashPlugin(),
+  createTablePlugin(),
 ]
+
+export const unsupportedItemsInTable = new Set([
+  'Code Block',
+  'Unordered List',
+  'Ordered List',
+  'Quote',
+  'Heading 1',
+  'Heading 2',
+  'Heading 3',
+  'Heading 4',
+  'Heading 5',
+  'Heading 6',
+])
 
 const isNodeActive = (editor, type) => {
   const pluginType = getPluginType(editor, type)
@@ -53,9 +73,7 @@ const isNodeActive = (editor, type) => {
     !!editor?.selection && someNode(editor, { match: { type: pluginType } })
   )
 }
-const isMarkActive = (editor, type) => {
-  return !!editor?.selection && isMarkActiveBase(editor, type)
-}
+
 const isListActive = (editor, type) => {
   const res = !!editor?.selection && getListItemEntry(editor)
   return !!res && res.list[0].type === type
@@ -78,13 +96,12 @@ const normalize = (node: any) => {
         children: node.children.map(normalize),
         id: Date.now(),
       }
-    } else {
-      // Always supply an empty text leaf
-      return {
-        ...node,
-        children: [{ text: '' }],
-        id: Date.now(),
-      }
+    }
+    // Always supply an empty text leaf
+    return {
+      ...node,
+      children: [{ text: '' }],
+      id: Date.now(),
     }
   }
   return node
@@ -158,7 +175,6 @@ const currentNodeSupportsMDX = (editor: PlateEditor) =>
 
 export const helpers = {
   isNodeActive,
-  isMarkActive,
   isListActive,
   currentNodeSupportsMDX,
   normalize,

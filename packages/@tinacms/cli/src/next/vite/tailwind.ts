@@ -1,9 +1,10 @@
 import tailwind from 'tailwindcss'
-import { Plugin } from 'vite'
+import type { Plugin } from 'vite'
 import defaultTheme from 'tailwindcss/defaultTheme.js'
 import twTypography from '@tailwindcss/typography'
 import aspectRatio from '@tailwindcss/aspect-ratio'
-import path from 'path'
+import path from 'node:path'
+import containerQueries from '@tailwindcss/container-queries'
 
 export const tinaTailwind = (
   spaPath: string,
@@ -208,6 +209,25 @@ export const tinaTailwind = (
                 500: '#EC4815',
                 600: '#DC4419',
               },
+              background: '#FFFFFF',
+              foreground: '#0A0A0A',
+              muted: '#F5F5F5',
+              'muted-foreground': '#737373',
+              popover: '#FFFFFF',
+              'popover-foreground': '#0A0A0A',
+              card: '#FFFFFF',
+              'card-foreground': '#0A0A0A',
+              border: '#E5E5E5',
+              input: '#E5E5E5',
+              primary: '#171717',
+              'primary-foreground': '#FAFAFA',
+              secondary: '#F5F5F5',
+              'secondary-foreground': '#171717',
+              accent: '#F5F5F5',
+              'accent-foreground': '#171717',
+              destructive: '#FF3B3B',
+              'destructive-foreground': '#FAFAFA',
+              ring: '#0A0A0A',
             },
             fontFamily: {
               sans: ['Inter', ...defaultTheme.fontFamily.sans],
@@ -234,7 +254,11 @@ export const tinaTailwind = (
           },
         },
         content,
-        plugins: [twTypography({ className: 'tina-prose' }), aspectRatio],
+        plugins: [
+          twTypography({ className: 'tina-prose' }),
+          aspectRatio,
+          containerQueries,
+        ],
       }) as unknown as Plugin
       plugins.push(tw)
 
