@@ -23,14 +23,28 @@ Unlike the Next.js and Astro versions, Hugo cannot use `useTina()` for visual/in
 ## Key Patterns
 
 - **Admin-only editing:** Content is edited via TinaCMS admin UI at `/admin/`. No inline/visual editing — that requires React `useTina()` which Hugo cannot use.
-- **`localContentPath`:** TinaCMS reads content from `examples/shared/` via `localContentPath: '../../../shared'` in tina config. No content symlinks needed.
+- **`localContentPath`:** TinaCMS reads content from `examples/shared/` via `localContentPath: '../../../shared'` in tina config. This handles the admin/API side.
+- **Hugo module mounts:** Hugo accesses shared content via `[[module.mounts]]` in `hugo.toml` (e.g., `../../shared/content/authors` → `content/authors`). Do NOT use directory symlinks for content — Hugo's Go-based file walker does not follow them on Windows. Module mounts are Hugo's official cross-platform mechanism. When any mount is specified, defaults are overridden — re-declare `layouts`, `static`, `assets`, `archetypes`.
 - **Hugo static folder:** Hugo uses `static/` (not `public/`). TinaCMS config sets `build.publicFolder: 'static'` and `media.tina.publicFolder: 'static'`.
-- **Image symlinks:** `static/uploads` and `static/blocks` are symlinked to `examples/shared/public/` for shared assets.
-- **Data-only collections:** Tag and Global collections use `build: {render: never, list: never}` in Hugo `_index.md` files to prevent page generation. Data is accessed via `site.GetPage`. Note: use `build` not `_build` — the `_build` key was deprecated in Hugo 0.145.0.
-- **Content format:** Hugo uses `.md` (not `.mdx`). TinaCMS collection configs set `format: 'md'`. Rich-text body is rendered via Hugo's Goldmark markdown renderer, not TinaMarkdown.
+- **Image symlinks:** `static/uploads` and `static/blocks` are symlinked to `examples/shared/public/` for shared assets. Static symlinks are fine — Hugo copies these differently than content.
+- **Data-only collections:** Tag and Global collections use `build: {render: never, list: never}` in Hugo cascade config to prevent page generation. Tags are accessed via `site.GetPage` for reference resolution. Global config is accessed via `site.Data.global.index` (mounted into Hugo's data directory as well as content). Use `cascade.target` (not `cascade._target` — deprecated in Hugo 0.156.0).
+- **Global config dual mount:** The shared global directory is mounted as BOTH `content/global` (for TinaCMS) and `data/global` (for Hugo templates). Hugo's `readFile`/`fileExists` can't reach files outside the project root, but `hugo.Data` reads from data mounts natively. Access via `hugo.Data.global.index`. Note: use `hugo.Data` not `site.Data` — the latter was deprecated in Hugo v0.156.0.
+- **Content format:** Collections with `.md`/`.json` shared content (authors, tags, global) use module mounts directly. Collections with `.mdx` shared content (posts, blogs, pages) need local `.md` copies with MDX syntax stripped — Hugo cannot process `.mdx` files. TinaCMS collection `format` is set to `'mdx'` for these so the admin finds the shared files.
 - **Non-body rich-text fields:** Fields like `excerpt` and hero `text` use `string` type with `textarea` UI instead of `rich-text`, since Hugo cannot render rich-text AST stored in frontmatter.
-- **Reference resolution:** TinaCMS stores references as path strings (e.g., `content/authors/napoleon.md`). Hugo templates resolve these using `site.GetPage`.
+- **Reference resolution:** TinaCMS stores references as path strings (e.g., `content/authors/napoleon.md`). Hugo templates resolve these using `site.GetPage` with `path.BaseName` to extract the slug. Inside `{{ with }}` blocks, use `$.Site.GetPage` or the global `site.GetPage` — the context `.` changes to the field value.
+- **Dynamic HTML tags:** Hugo's auto-escaping converts `<{{ $tag }}>` to `&lt;h1>`. Use `printf` + `| safeHTML` for partials with dynamic tag names (e.g., gradient-title).
 - **Block rendering:** Page collection uses block-based content. Hugo templates dispatch to block partials via `{{ partial (printf "blocks/%s.html" ._template) . }}`.
+- **Image path security:** All `<img>` tags with CMS-controlled URLs use inline `hasPrefix` checks — only allow relative paths (`/`, `./`, `../`) and `http://`/`https://` URLs. This prevents XSS from protocol-relative URLs or `javascript:` schemes.
+- **Dark mode detection:** An inline `<script>` in `<head>` (before page render) checks `window.matchMedia('(prefers-color-scheme: dark)')` and adds the `dark` class to `<html>`. Must be inline (not deferred) to prevent a flash of wrong theme.
+- **`cross-env` for Windows:** The `dev` script uses `cross-env MONOREPO_DEV=true` for cross-platform env var support. Required because Windows `cmd` doesn't support inline `VAR=value command` syntax.
+
+## Partial Architecture
+
+Two types of section wrappers serve different purposes:
+- **`section.html`** — Color-variant wrapper (`default`/`tint`/`primary`) with gradient backgrounds. Used by block rendering and content sections that need theme-aware styling.
+- **`page-section.html`** — Lightweight fixed-style wrapper for listing pages. Gray gradient bg, centered title, `max-w-5xl` container. Used by post/blog/author list pages.
+- **`container.html`** — Centered max-width wrapper with configurable size (`small`/`medium`/`large`) and width variants.
+- **`actions.html`** — Renders action buttons/links with color-aware styling. Supports `button` (filled) and `link` (text) types with theme color variants.
 
 ## Build & Dev
 
@@ -62,15 +76,24 @@ Theme colors use CSS custom properties driven by a `data-theme` attribute on the
 
 ## Shared Content
 
-Content files live in `examples/shared/content/` (single source of truth for all kitchen-sink projects). This project uses `localContentPath: '../../../shared'` in `tina/config.tsx` so TinaCMS reads content directly from the shared directory.
+Content files live in `examples/shared/content/` (single source of truth for all kitchen-sink projects).
 
-Static assets (`static/uploads`, `static/blocks`) are symlinked to `examples/shared/public/`.
+**TinaCMS side:** `localContentPath: '../../../shared'` in `tina/config.tsx` tells TinaCMS to read/write content from the shared directory.
+
+**Hugo side:** `[[module.mounts]]` in `hugo.toml` mounts shared content directories into Hugo's content tree. Collections with `.md`/`.json` content (authors, tags, global) are mounted directly. Collections with `.mdx` content (posts, blogs, pages) need local `.md` copies in `content/` since Hugo cannot process `.mdx` files.
+
+**Static assets:** `static/uploads` and `static/blocks` are symlinked to `examples/shared/public/`. Static symlinks work fine cross-platform.
 
 ## Known Limitations vs Next.js/Astro Versions
 
 | Feature | Next.js/Astro | Hugo |
 |---------|---------------|------|
-| Visual/inline editing | Click-to-edit via `useTina()` | Admin panel only |
+| Visual/inline editing | Click-to-edit via `useTina()` | Admin panel only ([TinaCMS docs](https://tina.io/docs/contextual-editing/overview)) |
 | Image optimization | Framework `<Image>` component | Standard `<img>` tags |
 | Client-side navigation | SPA-style | Full page reloads |
 | Custom rich-text templates | BlockQuote, DateTime, NewsletterSignup | Not supported (Goldmark) |
+| Global config hot-reload | Live reload on edit | Requires `pnpm dev` restart |
+
+### Global config hot-reload
+
+Hugo's dev server doesn't hot-reload data files from data mounts (e.g., `../../shared/content/global`). Content mounts (authors, tags, posts, etc.) hot-reload fine when edited. But `global/index.json` is read via `hugo.Data.global` (a data mount), and Hugo doesn't trigger a live reload when data mount files change. If you change `global/index.json` (theme, nav, footer, etc.) while the dev server is running, the changes won't appear until you restart `pnpm dev`.
