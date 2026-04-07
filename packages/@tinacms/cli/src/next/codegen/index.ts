@@ -24,11 +24,13 @@ export class Codegen {
   localUrl: string;
   // production url
   productionUrl: string;
+  // URL for the local GraphQL server used during offline builds
   localBuildUrl?: string;
   graphqlSchemaDoc: DocumentNode;
   tinaSchema: TinaSchema;
   lookup: any;
   noClientBuildCache: boolean;
+  // When true, queries run locally but the generated client points to TinaCloud
   localContentBuild: boolean;
 
   constructor({
