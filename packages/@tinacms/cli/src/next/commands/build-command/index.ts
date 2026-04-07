@@ -163,13 +163,13 @@ export class BuildCommand extends BaseCommand {
     });
     const apiURL = await codegen.execute();
 
-    // Always index the content if we are building locally or offline (and not skipping indexing)
+    // Always index the content if we are building locally (and not skipping indexing)
     if (
       (configManager.hasSelfHostedConfig() || this.localOption || this.offlineOption) &&
       !this.skipIndexing
     ) {
-      // if we are building locally or offline use the default spinner text
-      const text = (this.localOption || this.offlineOption)
+      // if we are building locally use the default spinner text
+      const text = this.localOption
         ? undefined
         : 'Indexing to self-hosted data layer';
       try {
