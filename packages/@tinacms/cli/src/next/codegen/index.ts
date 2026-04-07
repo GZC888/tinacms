@@ -24,12 +24,10 @@ export class Codegen {
   localUrl: string;
   // production url
   productionUrl: string;
-  localBuildUrl?: string;
   graphqlSchemaDoc: DocumentNode;
   tinaSchema: TinaSchema;
   lookup: any;
   noClientBuildCache: boolean;
-  localContentBuild: boolean;
 
   constructor({
     configManager,
@@ -41,7 +39,6 @@ export class Codegen {
     tinaSchema,
     lookup,
     noClientBuildCache,
-    localContentBuild,
   }: {
     configManager: ConfigManager;
     port?: number;
@@ -52,7 +49,6 @@ export class Codegen {
     tinaSchema: TinaSchema;
     lookup: any;
     noClientBuildCache: boolean;
-    localContentBuild?: boolean;
   }) {
     this.isLocal = isLocal;
     this.graphqlSchemaDoc = graphqlSchemaDoc;
@@ -64,7 +60,6 @@ export class Codegen {
     this.fragDoc = fragDoc;
     this.lookup = lookup;
     this.noClientBuildCache = noClientBuildCache;
-    this.localContentBuild = localContentBuild || false;
   }
 
   async writeConfigFile(fileName: string, data: string) {
@@ -117,11 +112,10 @@ export class Codegen {
     // update _lookup.json
     await this.writeConfigFile('_lookup.json', JSON.stringify(this.lookup));
 
-    const { apiURL, localUrl, tinaCloudUrl, localBuildUrl } = this._createApiUrl();
+    const { apiURL, localUrl, tinaCloudUrl } = this._createApiUrl();
     this.apiURL = apiURL;
     this.localUrl = localUrl;
     this.productionUrl = tinaCloudUrl;
-    this.localBuildUrl = localBuildUrl;
 
     if (this.configManager.shouldSkipSDK()) {
       await this.removeGeneratedFilesIfExists();
@@ -241,20 +235,16 @@ export class Codegen {
     let localUrl = `http://localhost:${this.port}/graphql`;
     let tinaCloudUrl = `${baseUrl}/${version}/content/${clientId}/github/${branch}`;
 
-    let apiURL: string;
-    if (this.isLocal && !this.localContentBuild) {
-      apiURL = `http://localhost:${this.port}/graphql`;
-    } else {
-      apiURL = `${baseUrl}/${version}/content/${clientId}/github/${branch}`;
-    }
+    let apiURL = this.isLocal
+      ? `http://localhost:${this.port}/graphql`
+      : `${baseUrl}/${version}/content/${clientId}/github/${branch}`;
 
     if (this.configManager.config.contentApiUrlOverride) {
       apiURL = this.configManager.config.contentApiUrlOverride;
       localUrl = apiURL;
       tinaCloudUrl = apiURL;
     }
-    const localBuildUrl = this.port ? `http://localhost:${this.port}/graphql` : undefined;
-    return { apiURL, localUrl, tinaCloudUrl, localBuildUrl };
+    return { apiURL, localUrl, tinaCloudUrl };
   }
 
   getApiURL() {
